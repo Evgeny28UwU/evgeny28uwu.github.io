@@ -220,6 +220,52 @@
             height: 18px;
         }
 
+        /* === Индикатор статуса по времени Тбилиси === */
+        .status-badge {
+            margin-top: 20px;
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+            padding: 8px 16px;
+            background: rgba(0, 0, 0, 0.35);
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            border-radius: 20px;
+            font-size: 0.88em;
+            font-weight: 500;
+            color: var(--text-color);
+            backdrop-filter: blur(5px);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+        }
+
+        .status-dot {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            display: inline-block;
+            box-shadow: 0 0 8px currentColor;
+        }
+
+        /* Цвета и анимация пульсации точек */
+        .status-online { color: #43b581; background-color: #43b581; animation: pulse-green 2s infinite; }
+        .status-school { color: #faa61a; background-color: #faa61a; animation: pulse-yellow 2s infinite; }
+        .status-sleep  { color: #9b59b6; background-color: #9b59b6; animation: pulse-purple 2s infinite; }
+
+        @keyframes pulse-green {
+            0% { box-shadow: 0 0 0 0 rgba(67, 181, 129, 0.7); }
+            70% { box-shadow: 0 0 0 8px rgba(67, 181, 129, 0); }
+            100% { box-shadow: 0 0 0 0 rgba(67, 181, 129, 0); }
+        }
+        @keyframes pulse-yellow {
+            0% { box-shadow: 0 0 0 0 rgba(250, 166, 26, 0.7); }
+            70% { box-shadow: 0 0 0 8px rgba(250, 166, 26, 0); }
+            100% { box-shadow: 0 0 0 0 rgba(250, 166, 26, 0); }
+        }
+        @keyframes pulse-purple {
+            0% { box-shadow: 0 0 0 0 rgba(155, 89, 182, 0.7); }
+            70% { box-shadow: 0 0 0 8px rgba(155, 89, 182, 0); }
+            100% { box-shadow: 0 0 0 0 rgba(155, 89, 182, 0); }
+        }
+
         /* === Адаптация === */
         @media (max-width: 850px) {
             body { padding: 20px 10px; }
@@ -251,6 +297,11 @@
             <img src="avatar.png" alt="Avatar" class="avatar">
             <h1 class="nickname">EVGENY28<br>(ЖЕКА/ЕВГЕНИЙ/<br>ЖЕНЁК)</h1>
             <p class="quote">«Я просто скитаюсь по жизни, и попутно коллекционирую фобии»</p>
+            <!-- ВОТ ЭТА НОВАЯ СТРОКА С ТЕКУЩИМ СТАТУСОМ -->
+            <div class="status-badge" id="statusBadge">
+                <span class="status-dot" id="statusDot"></span>
+                <span id="statusText">Загрузка статуса...</span>
+            </div>
         </div>
 
         <!-- Правая колонка -->
@@ -331,5 +382,51 @@
 
     </div>
 
+     <!-- Скрипт автоматического статуса по времени Тбилиси -->
+    <script>
+        function updateTbilisiStatus() {
+            // Получаем текущее время строго по часовому поясу Тбилиси (Asia/Tbilisi)
+            const now = new Date();
+            const tbilisiOptions = { timeZone: 'Asia/Tbilisi', hour12: false, hour: '2-digit', minute: '2-digit' };
+            const timeString = now.toLocaleTimeString('ru-RU', tbilisiOptions);
+            
+            const [hours, minutes] = timeString.split(':').map(Number);
+            const currentMinutes = hours * 60 + minutes; // Время в минутах от начала дня
+
+            // Расписание в минутах:
+            // 00:30 = 30 мин
+            // 09:30 = 570 мин
+            // 13:40 = 820 мин
+            // 18:50 = 1130 мин
+
+            const dot = document.getElementById('statusDot');
+            const text = document.getElementById('statusText');
+
+            // Сбрасываем прошлые классы
+            dot.className = 'status-dot';
+
+            // 1. Сплю: с 00:30 до 09:30
+            if (currentMinutes >= 30 && currentMinutes < 570) {
+                dot.classList.add('status-sleep');
+                text.textContent = '💤 Сплю (до 09:30)';
+            }
+            // 2. В школе / занят: с 13:40 до 18:50
+            else if (currentMinutes >= 820 && currentMinutes < 1130) {
+                dot.classList.add('status-school');
+                text.textContent = '📚 В школе / занят (до 18:50)';
+            }
+            // 3. В сети: всё остальное время
+            else {
+                dot.classList.add('status-online');
+                text.textContent = '🟢 В сети / свободен';
+            }
+        }
+
+        // Запускаем проверку сразу при загрузке страницы
+        updateTbilisiStatus();
+        // Обновляем статус каждые 30 секунд, чтобы время сменялось плавно
+        setInterval(updateTbilisiStatus, 30000);
+    </script>
+                            
 </body>
 </html>
