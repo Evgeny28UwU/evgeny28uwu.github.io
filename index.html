@@ -383,48 +383,55 @@
     </div>
 
      <!-- Скрипт автоматического статуса по времени Тбилиси -->
+        <!-- Обновлённый скрипт статуса по времени Тбилиси -->
     <script>
         function updateTbilisiStatus() {
-            // Получаем текущее время строго по часовому поясу Тбилиси (Asia/Tbilisi)
             const now = new Date();
-            const tbilisiOptions = { timeZone: 'Asia/Tbilisi', hour12: false, hour: '2-digit', minute: '2-digit' };
-            const timeString = now.toLocaleTimeString('ru-RU', tbilisiOptions);
             
-            const [hours, minutes] = timeString.split(':').map(Number);
-            const currentMinutes = hours * 60 + minutes; // Время в минутах от начала дня
+            // Время по Тбилиси
+            const tbilisiTimeString = now.toLocaleTimeString('ru-RU', { timeZone: 'Asia/Tbilisi', hour12: false, hour: '2-digit', minute: '2-digit' });
+            const [hours, minutes] = tbilisiTimeString.split(':').map(Number);
+            const currentMinutes = hours * 60 + minutes;
 
-            // Расписание в минутах:
-            // 00:30 = 30 мин
-            // 09:30 = 570 мин
-            // 13:40 = 820 мин
-            // 18:50 = 1130 мин
+            // День недели по Тбилиси
+            const tbilisiDayString = now.toLocaleDateString('en-US', { timeZone: 'Asia/Tbilisi', weekday: 'short' });
+            const isWeekend = (tbilisiDayString === 'Sat' || tbilisiDayString === 'Sun');
 
             const dot = document.getElementById('statusDot');
             const text = document.getElementById('statusText');
 
-            // Сбрасываем прошлые классы
             dot.className = 'status-dot';
 
-            // 1. Сплю: с 00:30 до 09:30
+            // 1. Сон: с 00:30 до 09:30
             if (currentMinutes >= 30 && currentMinutes < 570) {
                 dot.classList.add('status-sleep');
-                text.textContent = '💤 Сплю (до 09:30)';
+                text.textContent = '💤 Сплю до 09:30';
             }
-            // 2. В школе / занят: с 13:40 до 18:50
-            else if (currentMinutes >= 820 && currentMinutes < 1130) {
+            // 2. Учёба: с 13:40 до 18:50 (только в будни)
+            else if (!isWeekend && currentMinutes >= 820 && currentMinutes < 1130) {
                 dot.classList.add('status-school');
-                text.textContent = '📚 В школе / занят (до 18:50)';
+                text.textContent = '📚 Учусь/недоступен до 18:50';
             }
-            // 3. В сети: всё остальное время
+            // 3. Онлайн (с указанием следующей активности)
             else {
                 dot.classList.add('status-online');
-                text.textContent = '🟢 В сети / свободен';
+                
+                // До 00:30 ночи
+                if (currentMinutes < 30) {
+                    text.textContent = '🟢 Онлайн до сна в 00:30';
+                }
+                // Утром перед учёбой в будни (с 09:30 до 13:40)
+                else if (!isWeekend && currentMinutes >= 570 && currentMinutes < 820) {
+                    text.textContent = '🟢 Онлайн до учёбы в 13:40';
+                }
+                // Вся остальная часть дня (вечера и выходные)
+                else {
+                    text.textContent = '🟢 Онлайн до сна в 00:30';
+                }
             }
         }
 
-        // Запускаем проверку сразу при загрузке страницы
         updateTbilisiStatus();
-        // Обновляем статус каждые 30 секунд, чтобы время сменялось плавно
         setInterval(updateTbilisiStatus, 30000);
     </script>
                             
